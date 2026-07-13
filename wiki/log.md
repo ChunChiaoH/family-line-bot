@@ -1,5 +1,11 @@
 # Log
 
+## [2026-07-14] change | 高鐵查詢 tool（TDX）+ 時間注入
+
+`search_thsr`：TDX 官方 API 查時刻/票價，回覆含訂票連結（訂票無 API，最後一哩留給真人）。
+附帶修正：注入現在時間到 user prompt，解決「明天」被猜成訓練資料年份的 bug（[[tools]]）。
+新 secret：TDX_CLIENT_SECRET；新 env：TDX_CLIENT_ID（[[deployment]]）。image tag 改用 git SHA。
+
 Append-only。格式：`## [YYYY-MM-DD] <type> | <title>`，type ∈ ingest / change / lint / decision。
 
 ## [2026-07-11] change | 混合觸發 + Firestore 持久化 + 安全加固上線
