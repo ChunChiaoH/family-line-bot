@@ -45,6 +45,13 @@ Prompt 指令的納入門檻：具體、有觸發條件、加後 live 驗證、�
 只有被 quote 提問（或 1:1 開 `AUTO_DESCRIBE_IMAGES`）時媒體才進請求。
 控制成本的關鍵設計，加新媒體類型時沿用。
 
+## Tool description = 模型的能力自我認知
+
+模型從 tool description 判斷自己會什麼。實際案例：座位查詢程式碼已上線，
+但 description 只寫「時刻與票價」，家人問「還有位子嗎」時模型誠實回答「我不能查」
+且不呼叫工具。**每次擴充工具能力，description 必須同步更新**，並用能力相關的
+問句 live 測試觸發。
+
 ## 新增一個 tool 的步驟
 
 1. `services/claude.py`：加 tool 定義 dict（description 要寫**何時**該用，不只功能——
