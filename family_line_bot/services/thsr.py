@@ -79,21 +79,18 @@ class ThsrService:
         token = self._token if self._valid_token() else self._fetch_token()
         url = f"{_BASE}{path}"
         query = {**(params or {}), "$format": "JSON"}
-        resp = httpx.get(
-            url,
-            params=query,
-            headers={"authorization": f"Bearer {token}"},
-            timeout=_TIMEOUT,
-        )
+        headers = {"authorization": f"Bearer {token}"}
+        resp = httpx.get(url, params=query, headers=headers, timeout=_TIMEOUT)
         # Token may have been revoked/expired server-side: refresh once, retry.
         if resp.status_code == 401:
-            token = self._fetch_token()
-            resp = httpx.get(
-                url,
-                params=query,
-                headers={"authorization": f"Bearer {token}"},
-                timeout=_TIMEOUT,
-            )
+            headers = {"authorization": f"Bearer {self._fetch_token()}"}
+            resp = httpx.get(url, params=query, headers=headers, timeout=_TIMEOUT)
+        # TDX free tier rate-limits bursts; one search() is 3 quick calls.
+        for backoff in (1.5, 3.0):
+            if resp.status_code != 429:
+                break
+            time.sleep(backoff)
+            resp = httpx.get(url, params=query, headers=headers, timeout=_TIMEOUT)
         resp.raise_for_status()
         return resp.json()
 
@@ -112,6 +109,25 @@ class ThsrService:
             return f"{int(hour):02d}:{int(minute):02d}"
         except Exception:
             return "00:00"
+
+    def _seat_markers(self, origin_id: str, dest_id: str) -> dict[str, str]:
+        """TrainNo -> seat marker for trains departing origin toward dest.
+
+        AvailableSeatStatusList covers roughly the next day of departures and
+        reports status per destination stop (O=有位, L=有限, X=售完). Trains
+        outside its horizon simply won't be in the map — callers omit markers.
+        """
+        data = self._get(f"/v2/Rail/THSR/AvailableSeatStatusList/{origin_id}")
+        label = {"O": "✅有位", "L": "⚠️位少", "X": "❌標準廂售完"}
+        markers: dict[str, str] = {}
+        for train in data.get("AvailableSeats", []):
+            for stop in train.get("StopStations", []):
+                if stop.get("StationID") == dest_id:
+                    status = stop.get("StandardSeatStatus")
+                    if status in label:
+                        markers[train.get("TrainNo")] = label[status]
+                    break
+        return markers
 
     @staticmethod
     def _standard_fare(data: list | dict) -> int | None:
@@ -193,6 +209,19 @@ class ThsrService:
             # Fare is a nice-to-have; a timetable-only answer is still useful.
             logger.warning("THSR fare query failed: %s", e)
 
+        markers: dict[str, str] = {}
+        try:
+            markers = self._seat_markers(origin_id, dest_id)
+        except Exception as e:
+            logger.warning("THSR seat status query failed: %s", e)
+
         header = f"{o_name}→{d_name} {date}（{after} 起）"
-        body = "\n".join(f"{no} {dep}→{arr}" for dep, arr, no in trains)
-        return f"{header}\n{body}{fare_line}\n\n訂票：{_BOOKING_URL}"
+        lines = []
+        marked_any = False
+        for dep, arr, no in trains:
+            marker = markers.get(no)
+            marked_any = marked_any or marker is not None
+            lines.append(f"{no} {dep}→{arr}" + (f" {marker}" if marker else ""))
+        body = "\n".join(lines)
+        note = "\n（座位狀態為對號座即時資訊，僅涵蓋近期班次）" if marked_any else ""
+        return f"{header}\n{body}{fare_line}{note}\n\n訂票：{_BOOKING_URL}"
