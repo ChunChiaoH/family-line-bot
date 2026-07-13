@@ -25,7 +25,7 @@ Runner 會把它當終局訊息回傳 → 靜默截斷回答）。手寫迴圈�
 |---|---|---|
 | `web_search`（`web_search_20260209`, max_uses=3）| Anthropic server-side | 每千次搜尋 $10 + 結果 token；**只支援 Sonnet 4.6/5、Opus 4.6+，Haiku 不支援** |
 | `memory`（`memory_20250818`）| Anthropic client-side，後端 `services/memory.py` | 只在寫入/整理時多 1-2 輪；讀取走 prompt 注入（見 [[memory-design]]，含反 view 指示的理由）|
-| `search_thsr` | custom，`services/thsr.py`（TDX 官方 API）| 免費層 3000 次/月；查時刻+票價，回覆含官方訂票連結。訂票本身高鐵無 API（驗證碼防бот），刻意不繞 |
+| `search_thsr` | custom，`services/thsr.py`（TDX 官方 API）| 免費層 3000 次/月；查時刻+票價+對號座剩位（O/L/X，僅涵蓋約一天內班次），回覆含官方訂票連結。訂票本身高鐵無 API（驗證碼防бот），刻意不繞。**TDX 會 429 限速**，_get 內建退避重試 |
 
 （`remember` 自訂 tool 已於 2026-07-13 退役，被 memory tool 完全取代。）
 
