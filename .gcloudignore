@@ -1,0 +1,9 @@
+# Never upload secrets or local cruft to Cloud Build
+.env
+__pycache__/
+*.pyc
+*.egg-info/
+.claude/
+scripts/
+.gcloudignore
+Dockerfile.dockerignore
