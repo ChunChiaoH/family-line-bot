@@ -66,6 +66,12 @@ Prompt 指令的納入門檻：具體、有觸發條件、加後 live 驗證、�
 
 ## Roadmap（已討論、未實作）
 
+- **高鐵導訂連結**（等 TDX 申請核准，2026-07-14 送件）：核准後把導訂連結（帶入日期/
+  起訖站/車次/票數、具時效性）接進 search_thsr 回覆，取代通用訂票連結。
+  官方 MCP（https://github.com/tdxmotc/MCP ，server `https://tdx.transportdata.tw/tdx-mcp/rail`）
+  證實此機制存在但未公開 URL 組法——細節應隨核准提供；可先在 Claude Code 加該 MCP
+  用同一組金鑰實測，觀察實際連結格式再接。不採用 MCP 進 bot：功能比我們的
+  REST 實作少（無座位狀態）且共用同一配額。
 - **提醒功能**：`set_reminder` tool + Cloud Tasks 排程 + LINE Push API（推播不佔 reply token）
 - **每日摘要**：Cloud Scheduler 定時觸發，摘要近 24h 對話推播（與提醒共用推播基建）
 - **相片問答強化**：藥單/菜單/通知單場景，純 prompt 工作

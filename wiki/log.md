@@ -1,5 +1,11 @@
 # Log
 
+## [2026-07-14] ingest | TDX 官方 MCP 勘查 → 導訂機制證實，roadmap 更新
+
+github.com/tdxmotc/MCP：官方 rail MCP（車次/票價/導訂）。導訂=產生時效性連結自動帶入
+車次資訊，非完成交易；權限需另申請（已於 07-14 送件待審）。決定不接 MCP 進 bot，
+核准後直接接導訂 API 進 search_thsr（[[tools]] roadmap 有細節與實測捷徑）。
+
 ## [2026-07-14] change | 高鐵查詢 tool（TDX）+ 時間注入
 
 `search_thsr`：TDX 官方 API 查時刻/票價，回覆含訂票連結（訂票無 API，最後一哩留給真人）。
