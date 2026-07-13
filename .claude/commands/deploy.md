@@ -47,7 +47,7 @@ Create each secret once (the `create` is idempotent via `|| true`), then push th
 the previous version.
 
 ```bash
-for NAME in LINE_CHANNEL_SECRET LINE_CHANNEL_ACCESS_TOKEN ANTHROPIC_API_KEY; do
+for NAME in LINE_CHANNEL_SECRET LINE_CHANNEL_ACCESS_TOKEN ANTHROPIC_API_KEY TDX_CLIENT_SECRET; do
   gcloud secrets create "${NAME}" --replication-policy="automatic" \
     --project="${PROJECT_ID}" || true   # ignore "already exists"
 
@@ -62,7 +62,7 @@ unset VALUE
 Grant the runtime SA read access to each secret (idempotent):
 
 ```bash
-for NAME in LINE_CHANNEL_SECRET LINE_CHANNEL_ACCESS_TOKEN ANTHROPIC_API_KEY; do
+for NAME in LINE_CHANNEL_SECRET LINE_CHANNEL_ACCESS_TOKEN ANTHROPIC_API_KEY TDX_CLIENT_SECRET; do
   gcloud secrets add-iam-policy-binding "${NAME}" \
     --member="serviceAccount:${RUNTIME_SA}" \
     --role="roles/secretmanager.secretAccessor" \
@@ -93,8 +93,8 @@ gcloud run deploy "${SERVICE}" \
   --service-account="${RUNTIME_SA}" \
   --max-instances=1 \
   --allow-unauthenticated \
-  --set-secrets="LINE_CHANNEL_SECRET=LINE_CHANNEL_SECRET:latest,LINE_CHANNEL_ACCESS_TOKEN=LINE_CHANNEL_ACCESS_TOKEN:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest" \
-  --set-env-vars="WEBHOOK_PATH_TOKEN=$(grep -E '^WEBHOOK_PATH_TOKEN=' .env | cut -d= -f2-),ALLOWED_CHAT_IDS=$(grep -E '^ALLOWED_CHAT_IDS=' .env | cut -d= -f2-),USE_FIRESTORE=true,SESSION_WINDOW_MINUTES=10,CLAUDE_MODEL=claude-sonnet-4-6" \
+  --set-secrets="LINE_CHANNEL_SECRET=LINE_CHANNEL_SECRET:latest,LINE_CHANNEL_ACCESS_TOKEN=LINE_CHANNEL_ACCESS_TOKEN:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,TDX_CLIENT_SECRET=TDX_CLIENT_SECRET:latest" \
+  --set-env-vars="^;^WEBHOOK_PATH_TOKEN=$(grep -E '^WEBHOOK_PATH_TOKEN=' .env | cut -d= -f2-);ALLOWED_CHAT_IDS=$(grep -E '^ALLOWED_CHAT_IDS=' .env | cut -d= -f2-);TDX_CLIENT_ID=$(grep -E '^TDX_CLIENT_ID=' .env | cut -d= -f2-);USE_FIRESTORE=true;SESSION_WINDOW_MINUTES=10;CLAUDE_MODEL=claude-sonnet-4-6" \
   --project="${PROJECT_ID}"
 ```
 

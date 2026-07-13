@@ -46,13 +46,19 @@ def create_app(settings: Settings) -> FastAPI:
     line = LineService(access_token=settings.line_channel_access_token)
     webhook_handler = WebhookHandler(settings.line_channel_secret)
 
+    thsr = None
+    if settings.tdx_client_id and settings.tdx_client_secret:
+        from .services.thsr import ThsrService
+
+        thsr = ThsrService(settings.tdx_client_id, settings.tdx_client_secret)
+
     @webhook_handler.add(MessageEvent, message=TextMessageContent)
     def handle_text(event: MessageEvent):
         chat_id = get_chat_id(event)
         if settings.allowed_chat_id_set and chat_id not in settings.allowed_chat_id_set:
             logger.warning("Ignoring message from non-whitelisted chat %s", chat_id)
             return
-        text_handler.process(event, store, claude, line, settings.session_window)
+        text_handler.process(event, store, claude, line, settings.session_window, thsr)
 
     @webhook_handler.add(MessageEvent, message=ImageMessageContent)
     def handle_image(event: MessageEvent):

@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     session_window_minutes: int = 10
     use_firestore: bool = False
     gcp_project: str = ""  # empty = let the client auto-detect via ADC
+    tdx_client_id: str = ""
+    tdx_client_secret: str = ""
 
     @property
     def context_window(self) -> timedelta:

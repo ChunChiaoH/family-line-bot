@@ -61,6 +61,7 @@ def process(
     claude: ClaudeService,
     line: LineService,
     session_window: timedelta,
+    thsr=None,
 ) -> None:
     chat_id = get_chat_id(event)
     user_id = event.source.user_id or "unknown"
@@ -99,6 +100,9 @@ def process(
             return
 
         memory_backend = MemoryToolBackend(store, chat_id)
+        tool_handlers = {"memory": memory_backend.handle}
+        if thsr is not None:
+            tool_handlers["search_thsr"] = thsr.search
 
         try:
             reply_text = claude.ask_text(
@@ -108,7 +112,7 @@ def process(
                 quoted_image=quoted_image,
                 may_skip=may_skip,
                 memory=memory_backend.render(),
-                tool_handlers={"memory": memory_backend.handle},
+                tool_handlers=tool_handlers,
             )
         except Exception as e:
             logger.error("Claude API error: %s", e)

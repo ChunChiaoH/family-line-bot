@@ -1,8 +1,12 @@
 import base64
 import logging
+from datetime import datetime
 from typing import Callable
+from zoneinfo import ZoneInfo
 
 import anthropic
+
+_WEEKDAYS = "一二三四五六日"
 
 logger = logging.getLogger(__name__)
 
@@ -38,14 +42,42 @@ _MEMORY_INSTRUCTION = (
     "=== 長期記憶開始 ===\n{memory}\n=== 長期記憶結束 ==="
 )
 
+_THSR_TOOL = {
+    "name": "search_thsr",
+    "description": (
+        "查詢台灣高鐵的班次時刻與票價。當家人詢問高鐵班次、發車時間、票價、"
+        "或想訂高鐵票時使用。回傳結果已含官方訂票連結，直接轉述給家人即可。"
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "origin": {"type": "string", "description": "出發站，例如 台北"},
+            "destination": {"type": "string", "description": "到達站，例如 左營"},
+            "date": {"type": "string", "description": "乘車日期 YYYY-MM-DD"},
+            "time_after": {
+                "type": "string",
+                "description": "只列出此時間之後出發的班次 HH:MM，未指定時用 00:00",
+            },
+        },
+        "required": ["origin", "destination", "date"],
+    },
+}
+
 _MAX_TOOL_ITERATIONS = 5
 
 
 class ClaudeService:
-    def __init__(self, api_key: str, model: str, system_prompt: str):
+    def __init__(self, api_key: str, model: str, system_prompt: str, timezone: str = "Asia/Taipei"):
         self._client = anthropic.Anthropic(api_key=api_key)
         self._model = model
         self._system_prompt = system_prompt
+        self._tz = ZoneInfo(timezone)
+
+    def _now_line(self) -> str:
+        # Goes in the user prompt, not the system prompt: a per-request
+        # timestamp at the front of the prefix would defeat prompt caching.
+        now = datetime.now(self._tz)
+        return f"[現在時間：{now:%Y-%m-%d} 週{_WEEKDAYS[now.weekday()]} {now:%H:%M}（台灣時間）]\n"
 
     def ask_text(
         self,
@@ -63,7 +95,7 @@ class ClaudeService:
         if may_skip:
             system += _SKIP_INSTRUCTION
 
-        prompt = context + quoted + query
+        prompt = self._now_line() + context + quoted + query
         if quoted_image:
             content = [
                 {"type": "text", "text": prompt},
@@ -82,6 +114,8 @@ class ClaudeService:
         tools = [_WEB_SEARCH_TOOL]
         if tool_handlers and "memory" in tool_handlers:
             tools.append(_MEMORY_TOOL)
+        if tool_handlers and "search_thsr" in tool_handlers:
+            tools.append(_THSR_TOOL)
 
         messages = [{"role": "user", "content": content}]
         response = None
