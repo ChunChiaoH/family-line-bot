@@ -35,6 +35,10 @@ Runner 會把它當終局訊息回傳 → 靜默截斷回答）。手寫迴圈�
 解法：`ClaudeService._now_line()` 把現在時間（台灣時區，config 可調）注入**user prompt 開頭**。
 刻意不放 system prompt：每秒變動的前綴會讓 prompt caching 永遠失效。
 
+日期語義兩條 persona 規則（config.py）：回覆時攤開解析後的日期（「明天（7/14 週二）」，
+讓誤解可見可修正）；凌晨 00:00–05:00 的「明天」以當天優先（live 測試驗證通過）。
+Prompt 指令的納入門檻：具體、有觸發條件、加後 live 驗證、記錄於此。
+
 ## 媒體訊息的零 token 原則
 
 圖片/影片到達時**不呼叫 Claude**，只抓內容/縮圖進快取 + 記錄。
