@@ -35,6 +35,11 @@ ALLOWED_CHAT_IDS 填入第一群 / 第二群 / 第三群，其餘群組訊息直
 
 依 Karpathy LLM Wiki 模式建立；schema 寫入 CLAUDE.md。
 
+## [2026-07-13] change | 納入版本控制，推上 GitHub
+
+git init + initial commit d792213，private repo：github.com/ChunChiaoH/family-line-bot。
+.env 排除於版控（.gitignore 已涵蓋）。今後 deploy 前先 commit，image tag 可改用 git SHA。
+
 ## [2026-07-13] change | KB 升級為 wiki 格式（memory tool）+ 資料遷移
 
 `remember` 退役，改用第一方 `memory_20250818`：Claude 可自主編輯/整理每群的
