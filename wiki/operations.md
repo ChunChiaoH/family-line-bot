@@ -1,5 +1,5 @@
 ---
-updated: 2026-07-12
+updated: 2026-07-15
 ---
 
 # Operations — 營運與除錯
@@ -27,6 +27,7 @@ gcloud logging read 'resource.type=cloud_run_revision AND resource.labels.servic
 | LINE webhook 指向舊 URL | bot 完全不回、無 log | 跑 `scripts/set_webhook.py`，它會實測連通 |
 | PowerShell cp950 印不出 emoji | 測試腳本 UnicodeEncodeError | `$env:PYTHONIOENCODING='utf-8'` |
 | line-bot-sdk 在 Python 3.14 的 pydantic v1 警告 | import 時 UserWarning | 無害；container 用 python:3.12 避開 |
+| Cloud Run 縮到零後冷啟動丟請求（實例啟動 ~15s）| 閒置 >15 分後第一則訊息偶爾無回應；log 有 `request was aborted because there was no available instance`，連 Trigger 行都沒有 | LINE Console 開 webhook redelivery（免費）＋ handlers/text.py 的 `is_redelivery` 去重護欄。治本是 `min-instances=1`（~$7-15/月），刻意不採 |
 
 ## 成本模型
 

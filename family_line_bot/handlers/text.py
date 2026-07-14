@@ -64,6 +64,16 @@ def process(
     thsr=None,
 ) -> None:
     chat_id = get_chat_id(event)
+
+    # LINE webhook redelivery: a redelivered event we already logged was
+    # already processed (or judged) on first delivery — skip to avoid a
+    # double reply. An event lost before it reached us was never logged,
+    # so genuine redeliveries still go through.
+    delivery = getattr(event, "delivery_context", None)
+    if getattr(delivery, "is_redelivery", False) and store.get_message(chat_id, event.message.id):
+        logger.info("Skip redelivered message (chat=%s, msg=%s)", chat_id, event.message.id)
+        return
+
     user_id = event.source.user_id or "unknown"
     user_name = line.get_display_name(chat_id, user_id) if user_id != "unknown" else user_id
 

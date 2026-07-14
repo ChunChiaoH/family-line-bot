@@ -1,5 +1,12 @@
 # Log
 
+## [2026-07-15] change | 冷啟動丟訊息 → webhook redelivery + 去重護欄
+
+實測踩雷：閒置縮零後冷啟動 ~15s，期間 LINE webhook 被 abort，第一則訊息無聲消失
+（bot 端零紀錄）。解法：LINE Console 開 redelivery（人工開關）＋ text handler 加
+`is_redelivery` × 已記錄訊息的去重，避免重送造成雙重回覆（[[operations]]）。
+拒絕 min-instances=1：家庭量級不值常駐費。
+
 ## [2026-07-14] ingest | TDX 官方 MCP 勘查 → 導訂機制證實，roadmap 更新
 
 github.com/tdxmotc/MCP：官方 rail MCP（車次/票價/導訂）。導訂=產生時效性連結自動帶入
