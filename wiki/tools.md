@@ -72,7 +72,11 @@ Prompt 指令的納入門檻：具體、有觸發條件、加後 live 驗證、�
   證實此機制存在但未公開 URL 組法——細節應隨核准提供；可先在 Claude Code 加該 MCP
   用同一組金鑰實測，觀察實際連結格式再接。不採用 MCP 進 bot：功能比我們的
   REST 實作少（無座位狀態）且共用同一配額。
-- **提醒功能**：`set_reminder` tool + Cloud Tasks 排程 + LINE Push API（推播不佔 reply token）
+- **提醒功能**：`set_reminder` tool + Cloud Tasks 排程 + LINE Push API（推播不佔 reply token）。
+  **配額設計（2026-07-15 定案想法）**：Push 免費層 200 則/月，用混合投遞省配額——
+  到期提醒先掛起，搭下一則家人訊息的 reply token 捎帶出去（一次 reply 可夾 5 個訊息物件）；
+  硬時效提醒設短寬限期，逾期才真 Push。另 postback 事件（Flex 按鈕/rich menu）也附
+  reply token，按鈕互動不吃推播配額。
 - **每日摘要**：Cloud Scheduler 定時觸發，摘要近 24h 對話推播（與提醒共用推播基建）
 - **相片問答強化**：藥單/菜單/通知單場景，純 prompt 工作
 - 評估過不做：主動閒聊（噪音）、語音轉文字（價值低）、完整影片理解（抽幀成本高）
