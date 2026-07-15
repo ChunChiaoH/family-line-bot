@@ -37,6 +37,10 @@ gcloud logging read 'resource.type=cloud_run_revision AND resource.labels.servic
 - 帳戶是**儲值制**：餘額歸零 API 停，bot 回「ran into an issue」。這是天然花費上限，
   但家人會以為 bot 壞了——考慮 Console 開 auto-reload。
 - 降本順序：web_search `max_uses` 3→1 > 縮短 SESSION_WINDOW_MINUTES > Haiku 分流（工程量大，最後）。
+- **Prompt caching 尚未啟用**（2026-07-15 盤點）：claude.py 從未標 `cache_control`——設計上快取安全
+  （時間戳在 user prompt）但沒真的開。最受益處是 tool 迴圈（一次查詢 2-4 呼叫共用 system+tools 前綴，
+  讀快取 0.1x）。門檻：Sonnet 4.6 最小可快取前綴 2048 tokens，我們約在邊緣；量級小、省的是零錢，
+  下次動 claude.py 順手加（system 尾端一個斷點即可），加完看 usage.cache_read_input_tokens 驗證。
 
 ## 例行檢查（心智 checklist）
 
