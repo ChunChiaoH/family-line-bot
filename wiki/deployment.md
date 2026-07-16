@@ -38,11 +38,11 @@ gcloud run services update family-line-bot --region=asia-east1 \
 `^;^` 是 gcloud 的自訂分隔符語法，**值裡有逗號時必須用**（白名單就是）。
 注意 `--set-env-vars` 會整組替換、`--update-env-vars` 只改指定的。
 
-## 白名單現況（2026-07-12）
+## 白名單現況（2026-07-17）
 
-三個群組：第一群 `<CHAT_ID_REDACTED>`、第二群 `<CHAT_ID_REDACTED>`、
-第三群 `<CHAT_ID_REDACTED>`。空白名單 = 全放行（開發用）。
-新群組 ID 的取得方式見 [[operations]]。
+四個群組：第一群 `<CHAT_ID_REDACTED>`、第二群 `<CHAT_ID_REDACTED>`、
+第三群 `<CHAT_ID_REDACTED>`、第四群 `<CHAT_ID_REDACTED>`。
+空白名單 = 全放行（開發用）。新群組 ID 的取得方式見 [[operations]]。
 
 ## 部署後自動接 webhook
 

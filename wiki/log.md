@@ -1,5 +1,9 @@
 # Log
 
+## [2026-07-17] change | 白名單加入第四個群組
+
+`<CHAT_ID_REDACTED>`。只改 env var（revision 00014），無程式變更（[[deployment]]）。
+
 ## [2026-07-17] change | 資料保護三保險 + 帳單盤點
 
 Firestore PITR（7 天）＋ delete protection、GCS versioning ＋ 90 天 lifecycle。
