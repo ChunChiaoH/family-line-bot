@@ -44,6 +44,20 @@ gcloud logging read 'resource.type=cloud_run_revision AND resource.labels.servic
   每輪呼叫會印 `Usage: in=… cache_write=… cache_read=…` log 行，撈 log 即可驗證。
   ask_image 未標（低頻路徑，刻意不管）。
 
+## 資料保護（2026-07-17 起）
+
+D10 把 archive 定為不可替代資產後補上的保險，全部近零成本：
+
+- **Firestore PITR**：7 天任意時點回溯（誤寫/誤刪當週可救）。無免費層，月費約 $0.01 美金級。
+- **Firestore delete protection**：資料庫整顆誤刪的保險絲。
+- **GCS media bucket versioning**：誤刪/誤覆蓋只是疊版本；lifecycle 規則 90 天後清非當前版本。
+- 尚未做：Firestore 定期 export 到 GCS（防「一個月後才發現三週前壞掉」，PITR 只有 7 天窗）。
+  輕量版＝session 裡不定期跑 `gcloud firestore export`，可跟固化 job 同節奏。
+
+帳單防線：billing account 有預算 `no-more-than-10`（AUD $10/月，50%/90%/100% 門檻，
+email 通知 billing admin）。GCP 月帳單正常值趨近 $0（都在免費層內；真花錢的只有
+Anthropic token，不在 GCP 帳單上）。
+
 ## 例行檢查（心智 checklist）
 
 - Console 用量 vs 預期（測試日 ≈ $0.5+/天是正常的，日常應遠低於此）

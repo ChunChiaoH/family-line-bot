@@ -1,5 +1,12 @@
 # Log
 
+## [2026-07-17] change | 資料保護三保險 + 帳單盤點
+
+Firestore PITR（7 天）＋ delete protection、GCS versioning ＋ 90 天 lifecycle。
+理由：D10 之後 archive 是不可替代資產，原本的保護姿態卻是「app 資料」等級。
+盤點確認 billing account 已有 AUD $10 預算告警（no-more-than-10）。
+詳見 [[operations]] 資料保護節。待辦：Firestore 定期 export（PITR 只有 7 天窗）。
+
 ## [2026-07-16] change | 媒體 GCS 持久化（D10 選項 A 落地）
 
 照片/影片縮圖收到即存 `gs://<project>-media`，doc 記 `media_path`；
