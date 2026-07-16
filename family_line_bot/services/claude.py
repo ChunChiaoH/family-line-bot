@@ -125,9 +125,20 @@ class ClaudeService:
             response = self._client.messages.create(
                 model=self._model,
                 max_tokens=1024,
-                system=system,
+                # Breakpoint at the system tail caches the tools+system prefix
+                # across tool-loop iterations (and 5-min-adjacent requests).
+                # Below the model's minimum cacheable length it's silently a no-op.
+                system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
                 tools=tools,
                 messages=messages,
+            )
+            usage = response.usage
+            logger.info(
+                "Usage: in=%s out=%s cache_write=%s cache_read=%s",
+                usage.input_tokens,
+                usage.output_tokens,
+                getattr(usage, "cache_creation_input_tokens", None),
+                getattr(usage, "cache_read_input_tokens", None),
             )
 
             # Server tools (web_search) hit their iteration limit: resend to resume.

@@ -1,5 +1,5 @@
 ---
-updated: 2026-07-12
+updated: 2026-07-16
 verified-against: services/claude.py
 ---
 
@@ -92,7 +92,10 @@ Prompt 指令的納入門檻：具體、有觸發條件、加後 live 驗證、�
   (3) per-member 人格側寫（見 [[decisions]] D10——引用轉述用，非模仿）
   (4) per-群組語風檔（見下）。
 - **語風習得（familect acquisition，2026-07-16 設計）**：bot 從通用人味漸進適應家庭
-  語氣。三層：(1) persona 加 in-context 模仿指令（免費）(2) 固化 job 蒸餾 per-群組
+  語氣。**前置的人味基線已於 2026-07-16 進 config.py `_DEFAULT_PERSONA`**（訊息形狀貼群組
+  節奏、AI 腔負面清單、輕口語與 emoji 節制、敢有偏好），scratchpad live 測試語氣通過，
+  待部署後群組實測。few-shot 風格範例刻意不放基線——要等 archive 有料，
+  從真實對話採。三層：(1) persona 加 in-context 模仿指令（免費）(2) 固化 job 蒸餾 per-群組
   語風檔（稱呼/語助詞/emoji 習慣/當季梗）(3) 從 archive 採真實對話當 few-shot 風格範例。
   **防胖核心＝定容重蒸**：語風檔 ≤300 字、範例固定 3 組（1 經典+2 輪替），每次從近四週
   資料整份重生成並覆蓋——不追加，遺忘靠「不在近期資料裡就自然消失」。雙層分離：

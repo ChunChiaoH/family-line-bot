@@ -1,5 +1,13 @@
 # Log
 
+## [2026-07-16] change | 人味基線 persona + prompt caching 啟用
+
+`_DEFAULT_PERSONA` 重寫：家人不是客服（訊息形狀、AI 腔負面清單、輕口語、敢有偏好），
+日期/markdown 憲法條款保留（[[tools]]）。claude.py system 尾端標 `cache_control`，
+tool 迴圈與相鄰請求共用前綴；live 測試首發 cache_read≈16K（web_search server tool
+指令有平台側預快取）。加 Usage log 行供部署後驗證（[[operations]]）。
+與 redelivery 護欄（07-15）同車部署。
+
 ## [2026-07-16] ingest | 語風習得 + 定容重蒸 + KB 快照設計
 
 D10 的第一批落地設計：人味基線（形狀/負面清單/few-shot）、familect 三層習得、
