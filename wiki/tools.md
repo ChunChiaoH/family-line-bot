@@ -91,6 +91,14 @@ handler 零改動；get_message 先查 in-memory 快取、miss（重啟過）才
   讓照片對 context 與離線 KB 分析可見）：仍待使用者拍板——會部分推翻零 token 原則。
   選項 A（GCS 存 bytes）已於 2026-07-16 落地（見上方媒體節）；
   base64 進 Firestore 已評估否決（膨脹+1MB 上限+拖慢讀取）。
+- **完整影片持久化**（2026-07-16 使用者拍板要做）：理由——影片是家庭記憶價值密度最高的
+  媒體、LINE 伺服器端媒體會過期消失、GCS 成本零錢（asia-east1 不在 always-free 區，
+  但 $0.02/GB/月，年攢 10GB 也才月 $0.2）。bot 短期用不到（D9 否決影片理解）沒關係，
+  D10 攢/用分離：存給未來。工程要點（比照片難一階，獨立任務）：(1) streaming 下載——
+  line-bot-sdk 的 get_message_content 回整包 bytes，512Mi 記憶體撐不住大影片，
+  要繞過 SDK 用 httpx 串流直寫 GCS；(2) 設大小上限；(3) 大影片要先打 LINE 的
+  transcoding status API 確認轉檔完成；(4) webhook 拖長的重投風險已被 redelivery
+  護欄蓋掉，但下載要放在 log_message 之後讓護欄能生效。
 - **記憶固化 job**（2026-07-15 討論，2026-07-16 隨 D10 擴充）：現有記憶只從被觸發的
   對話形成，未觸發訊息中的事實進不了 KB。輕量版：使用者不定期叫 agent 讀 Firestore
   近期訊息、對照 memory files 出 diff、人工確認後寫入。自動版（驗證有價值後）：
