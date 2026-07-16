@@ -1,5 +1,13 @@
 # Log
 
+## [2026-07-17] change | SKIP 判斷第二次調校 + 回歸測試工具
+
+第四群實測漏接：回答 bot 問題但 @ 了家人被誤 SKIP、吐槽 bot 被已讀。
+兩列式重寫 _SKIP_INSTRUCTION ＋ 內嵌示例（三版規則措辭都失敗，示例一次中）。
+建立 `scripts/skip_regression.py`（四場景 × 3 次投票），改此 prompt 前必跑。
+蹺蹺板教訓與方法論記錄於 [[triggering]]。
+同場加映：redelivery 護欄與 prompt caching 均在 production 首次實證有效。
+
 ## [2026-07-17] change | 白名單加入第四個群組
 
 `<CHAT_ID_REDACTED>`。只改 env var（revision 00014），無程式變更（[[deployment]]）。
