@@ -1,6 +1,6 @@
 ---
-updated: 2026-07-12
-verified-against: revision family-line-bot-00006 / .claude/commands/deploy.md
+updated: 2026-07-16
+verified-against: revision family-line-bot-00012 / .claude/commands/deploy.md
 ---
 
 # Deployment — GCP 設定與部署
@@ -11,9 +11,12 @@ verified-against: revision family-line-bot-00006 / .claude/commands/deploy.md
 
 - GCP 專案 `<your-project-id>`，region asia-east1，服務 `family-line-bot`
 - Runtime SA：`family-line-bot-run@...`（最小權限：`roles/datastore.user` +
-  各 secret 的 `secretmanager.secretAccessor`；不要用預設 compute SA）
+  各 secret 的 `secretmanager.secretAccessor` + media bucket 的 `storage.objectAdmin`
+  （僅該 bucket，2026-07-16）；不要用預設 compute SA）
 - `--max-instances=1`：成本上限 + in-process 狀態的正確性前提（見 [[architecture]]）
 - Firestore Native mode，asia-east1，與 Cloud Run 同區
+- 媒體 bucket `gs://${PROJECT_ID}-media`：asia-east1、uniform access、
+  禁公開；env `MEDIA_BUCKET` 指向它（留空 = 關閉媒體持久化）
 
 ## Secrets 與環境變數的分界
 

@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     session_window_minutes: int = 10
     use_firestore: bool = False
     gcp_project: str = ""  # empty = let the client auto-detect via ADC
+    media_bucket: str = ""  # empty = media bytes stay cache-only (no GCS persistence)
     tdx_client_id: str = ""
     tdx_client_secret: str = ""
 

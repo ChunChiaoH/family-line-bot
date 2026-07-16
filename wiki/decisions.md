@@ -12,11 +12,12 @@ LINE webhook 是 request-driven 低流量場景，Cloud Run free tier（200 萬 
 Vercel 是 JS 優先平台，Python 要重構成 serverless function、沒有 Secret Manager 等級的
 金鑰管理、連 Firestore 要自管 credentials。**前提**：流量維持家庭規模。
 
-## D2: Firestore 持久化、圖片 bytes 例外
+## D2: Firestore 持久化、圖片 bytes 例外（例外已於 2026-07-16 收掉）
 
 Scale-to-zero 會掉 in-memory context。Firestore 免費層（5 萬讀/日）用不到 1%。
-圖片 bytes 因 1MB 文件上限留在記憶體，接受重啟即失。**前提**：引用圖片提問的
-時效性短；若家人常翻舊圖提問，考慮 GCS。
+圖片 bytes 因 1MB 文件上限不進 Firestore；原本接受「重啟即失」，D10（先攢後用）把
+持久化升級為必做 → 改存 GCS bucket、doc 記路徑（見 [[tools]] 媒體節）。
+**前提**：媒體量維持家庭規模（GCS 免費層 5GB 綽綽有餘）。
 
 ## D3: 記憶 = 整份文件進 prompt，不用 RAG
 

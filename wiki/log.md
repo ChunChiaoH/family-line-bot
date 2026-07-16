@@ -1,5 +1,13 @@
 # Log
 
+## [2026-07-16] change | 媒體 GCS 持久化（D10 選項 A 落地）
+
+照片/影片縮圖收到即存 `gs://<project>-media`，doc 記 `media_path`；
+MediaStore 注入 FirestoreChatStore，handler 零改動，get_message 快取 miss 時回 GCS 撈。
+D2 的「重啟即失」例外收掉（[[decisions]]）。新 env：MEDIA_BUCKET；
+runtime SA 加該 bucket 的 storage.objectAdmin（[[deployment]]）。
+零 token 原則不變；選項 B（Haiku 描述）仍待拍板。
+
 ## [2026-07-16] change | 人味基線 persona + prompt caching 啟用
 
 `_DEFAULT_PERSONA` 重寫：家人不是客服（訊息形狀、AI 腔負面清單、輕口語、敢有偏好），

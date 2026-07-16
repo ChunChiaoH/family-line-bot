@@ -34,6 +34,15 @@ gcloud iam service-accounts create family-line-bot-run \
 gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --member="serviceAccount:${RUNTIME_SA}" \
   --role="roles/datastore.user"
+
+# Media bucket (photos / video thumbnails) + object access for the runtime SA
+gcloud storage buckets create "gs://${PROJECT_ID}-media" \
+  --project="${PROJECT_ID}" --location="${REGION}" \
+  --uniform-bucket-level-access --public-access-prevention || true   # ignore "already exists"
+
+gcloud storage buckets add-iam-policy-binding "gs://${PROJECT_ID}-media" \
+  --member="serviceAccount:${RUNTIME_SA}" \
+  --role="roles/storage.objectAdmin" --project="${PROJECT_ID}"
 ```
 
 ## 3. Secrets in Secret Manager (one-time create, then add a version)
@@ -94,7 +103,7 @@ gcloud run deploy "${SERVICE}" \
   --max-instances=1 \
   --allow-unauthenticated \
   --set-secrets="LINE_CHANNEL_SECRET=LINE_CHANNEL_SECRET:latest,LINE_CHANNEL_ACCESS_TOKEN=LINE_CHANNEL_ACCESS_TOKEN:latest,ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,TDX_CLIENT_SECRET=TDX_CLIENT_SECRET:latest" \
-  --set-env-vars="^;^WEBHOOK_PATH_TOKEN=$(grep -E '^WEBHOOK_PATH_TOKEN=' .env | cut -d= -f2-);ALLOWED_CHAT_IDS=$(grep -E '^ALLOWED_CHAT_IDS=' .env | cut -d= -f2-);TDX_CLIENT_ID=$(grep -E '^TDX_CLIENT_ID=' .env | cut -d= -f2-);USE_FIRESTORE=true;SESSION_WINDOW_MINUTES=10;CLAUDE_MODEL=claude-sonnet-4-6" \
+  --set-env-vars="^;^WEBHOOK_PATH_TOKEN=$(grep -E '^WEBHOOK_PATH_TOKEN=' .env | cut -d= -f2-);ALLOWED_CHAT_IDS=$(grep -E '^ALLOWED_CHAT_IDS=' .env | cut -d= -f2-);TDX_CLIENT_ID=$(grep -E '^TDX_CLIENT_ID=' .env | cut -d= -f2-);USE_FIRESTORE=true;MEDIA_BUCKET=${PROJECT_ID}-media;SESSION_WINDOW_MINUTES=10;CLAUDE_MODEL=claude-sonnet-4-6" \
   --project="${PROJECT_ID}"
 ```
 

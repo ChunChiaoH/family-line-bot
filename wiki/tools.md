@@ -45,6 +45,14 @@ Prompt 指令的納入門檻：具體、有觸發條件、加後 live 驗證、�
 只有被 quote 提問（或 1:1 開 `AUTO_DESCRIBE_IMAGES`）時媒體才進請求。
 控制成本的關鍵設計，加新媒體類型時沿用。
 
+**GCS 持久化（2026-07-16，D10 選項 A 落地）**：bytes 收到即存
+`gs://<project>-media/chats/{chat_id}/{message_id}.jpg`，訊息 doc 記 `media_path`。
+整個藏在 `FirestoreChatStore` 後面（`services/media.py` 的 MediaStore 注入）——
+handler 零改動；get_message 先查 in-memory 快取、miss（重啟過）才回 GCS 撈。
+上傳失敗只記 log 不擋訊息處理。零 token 原則不變：存起來≠送給 Claude。
+影片只存縮圖（完整影片要 streaming 下載，Cloud Run 記憶體撐不起，未做）。
+`MEDIA_BUCKET` env 留空 = 關閉持久化（本機開發）。
+
 ## Tool description = 模型的能力自我認知
 
 模型從 tool description 判斷自己會什麼。實際案例：座位查詢程式碼已上線，
@@ -79,10 +87,9 @@ Prompt 指令的納入門檻：具體、有觸發條件、加後 live 驗證、�
   reply token，按鈕互動不吃推播配額。
 - **每日摘要**：Cloud Scheduler 定時觸發，摘要近 24h 對話推播（與提醒共用推播基建）
 - **相片問答強化**：藥單/菜單/通知單場景，純 prompt 工作
-- **媒體持久化**（2026-07-15 討論，待使用者拍板）：現況照片/縮圖只在記憶體快取，
-  重啟即失、context 只見「[分享了照片]」。選項 A（建議）：收到即存 GCS，Firestore 記路徑，
-  近零成本，救回引用問答；選項 B：收到時用 Haiku 生成一行描述存進訊息記錄（~$0.002/張，
-  月估 ~$1），讓照片對 context 與離線 KB 分析可見——會部分推翻零 token 原則，需使用者同意；
+- **媒體持久化選項 B**（Haiku 收圖即生成一行描述存進訊息記錄，~$0.002/張、月估 ~$1，
+  讓照片對 context 與離線 KB 分析可見）：仍待使用者拍板——會部分推翻零 token 原則。
+  選項 A（GCS 存 bytes）已於 2026-07-16 落地（見上方媒體節）；
   base64 進 Firestore 已評估否決（膨脹+1MB 上限+拖慢讀取）。
 - **記憶固化 job**（2026-07-15 討論，2026-07-16 隨 D10 擴充）：現有記憶只從被觸發的
   對話形成，未觸發訊息中的事實進不了 KB。輕量版：使用者不定期叫 agent 讀 Firestore

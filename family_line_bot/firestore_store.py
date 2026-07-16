@@ -4,11 +4,13 @@ from datetime import datetime, timedelta, timezone
 class FirestoreChatStore:
     """Firestore-backed ChatStore so context survives Cloud Run scale-to-zero.
 
-    Only text and timestamps are persisted. Image bytes stay in a process-local
-    cache (Firestore's 1MB doc limit); losing them on restart is acceptable.
+    Text and timestamps live in Firestore. Media bytes go to GCS via `media`
+    (the doc keeps only the blob path — Firestore's 1MB doc limit rules out
+    inline bytes) with a process-local cache as the hot path; without a
+    MediaStore they are cache-only and lost on restart.
     """
 
-    def __init__(self, context_window: timedelta, max_history: int, project: str = ""):
+    def __init__(self, context_window: timedelta, max_history: int, project: str = "", media=None):
         # Lazy import so google-cloud-firestore isn't required for local dev.
         from google.cloud import firestore
 
@@ -17,6 +19,7 @@ class FirestoreChatStore:
         self._context_window = context_window
         self._max_history = max_history
         self._image_cache: dict[str, bytes] = {}
+        self._media = media
 
     def _chat_ref(self, chat_id: str):
         return self._db.collection("chats").document(chat_id)
@@ -37,11 +40,14 @@ class FirestoreChatStore:
         image_bytes: bytes | None = None,
     ) -> None:
         now = datetime.now(timezone.utc)
-        self._messages_ref(chat_id).document(message_id).set(
-            {"ts": now, "user": user_id, "text": text, "type": msg_type}
-        )
+        entry = {"ts": now, "user": user_id, "text": text, "type": msg_type}
         if image_bytes is not None:
             self._image_cache[message_id] = image_bytes
+            if self._media is not None:
+                path = self._media.save(chat_id, message_id, image_bytes)
+                if path:
+                    entry["media_path"] = path
+        self._messages_ref(chat_id).document(message_id).set(entry)
 
     def log_bot_reply(self, chat_id: str, text: str, message_id: str | None = None) -> None:
         now = datetime.now(timezone.utc)
@@ -84,7 +90,13 @@ class FirestoreChatStore:
         if not snap.exists:
             return None
         entry = snap.to_dict()
-        entry["image_bytes"] = self._image_cache.get(message_id)
+        image_bytes = self._image_cache.get(message_id)
+        # Cache miss (restart since arrival): restore from GCS.
+        if image_bytes is None and self._media is not None and entry.get("media_path"):
+            image_bytes = self._media.load(entry["media_path"])
+            if image_bytes is not None:
+                self._image_cache[message_id] = image_bytes
+        entry["image_bytes"] = image_bytes
         return entry
 
     def get_memory(self, chat_id: str) -> str:

@@ -28,10 +28,17 @@ def create_app(settings: Settings) -> FastAPI:
     if settings.use_firestore:
         from .firestore_store import FirestoreChatStore
 
+        media = None
+        if settings.media_bucket:
+            from .services.media import MediaStore
+
+            media = MediaStore(settings.media_bucket, project=settings.gcp_project)
+
         store = FirestoreChatStore(
             context_window=settings.context_window,
             max_history=settings.max_history,
             project=settings.gcp_project,
+            media=media,
         )
     else:
         store = ChatStore(
