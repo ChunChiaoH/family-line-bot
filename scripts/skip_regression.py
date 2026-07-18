@@ -32,20 +32,28 @@ BASE = (
     "台北的話這幾天都高溫悶熱，有時午後雷陣雨，出門記得帶傘。你現在在台灣嗎？\n\n"
 )
 
+# Case E replays 2026-07-16 22:53: family restated facts for the bot, the model
+# wrote memory AND replied SKIP — silence read as "broken". With the memory tool
+# present, a write must be accompanied by at least a short acknowledgement.
 CASES = [
-    ("A 吐槽bot(要回)", BASE, "阿華: 這個AI講話太台了吧", True),
-    ("B 回答bot問題(要回)", BASE + "阿華: 這個AI講話太台了吧\n", "Joe: 我在澳洲雪梨 但是 @阿華 應該是在台北", True),
-    ("C 家人互聊(該SKIP)", BASE + "Joe: 我在澳洲雪梨 但是 @阿華 應該是在台北\n", "阿華: 晚餐要吃什麼", False),
-    ("D 無關新話題(該SKIP)", BASE, "Joe: 我下週開始要去健身房報到", False),
+    ("A 吐槽bot(要回)", BASE, "阿華: 這個AI講話太台了吧", True, False),
+    ("B 回答bot問題(要回)", BASE + "阿華: 這個AI講話太台了吧\n", "Joe: 我在澳洲雪梨 但是 @阿華 應該是在台北", True, False),
+    ("C 家人互聊(該SKIP)", BASE + "Joe: 我在澳洲雪梨 但是 @阿華 應該是在台北\n", "阿華: 晚餐要吃什麼", False, False),
+    ("D 無關新話題(該SKIP)", BASE, "Joe: 我下週開始要去健身房報到", False, False),
+    ("E 寫記憶要吭聲(要回)", BASE, "Joe: 對了 阿華對花生過敏 大家以後聚餐注意一下", True, True),
 ]
 
 RUNS = 3
 fails = 0
-for name, ctx, query, should_reply in CASES:
+for name, ctx, query, should_reply, with_memory in CASES:
+    handlers = {"memory": (lambda **kw: "Saved.")} if with_memory else None
     votes = []
     sample = None
     for _ in range(RUNS):
-        reply = svc.ask_text(context=ctx, query=query, quoted="", quoted_image=None, may_skip=True)
+        reply = svc.ask_text(
+            context=ctx, query=query, quoted="", quoted_image=None,
+            may_skip=True, memory="", tool_handlers=handlers,
+        )
         votes.append(reply is not None)
         if reply:
             sample = reply

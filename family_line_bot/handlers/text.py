@@ -96,7 +96,12 @@ def process(
 
     query = _extract_query(event)
     if not query:
-        return
+        # A bare "@bot" with no text: for hard triggers, being summoned and
+        # staying silent reads as broken — let Claude greet instead. A session
+        # message stripped empty means someone @'d another person; stay quiet.
+        if trigger == "session":
+            return
+        query = "[只 @ 了你，沒有其他內容——像被叫了一聲，回應一下]"
 
     logger.info("Trigger: %s (chat=%s, msg=%s)", trigger, chat_id, event.message.id)
     if quoted:

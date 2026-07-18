@@ -53,6 +53,11 @@ handler 零改動；get_message 先查 in-memory 快取、miss（重啟過）才
 影片只存縮圖（完整影片要 streaming 下載，Cloud Run 記憶體撐不起，未做）。
 `MEDIA_BUCKET` env 留空 = 關閉持久化（本機開發）。
 
+**媒體機制的自我認知（2026-07-18）**：實戰踩雷——家人沒 quote 就問「你能看到這張照片嗎」，
+bot 答「我看不到圖片」（錯，quote 就看得到），使用者被誤導以為沒有視覺功能。
+「tool description = 能力自我認知」教訓的媒體版：persona 現在明寫 quote 機制，
+bot 會教家人「長按照片選回覆再問一次」。加新媒體能力時記得同步更新這段自我說明。
+
 ## Tool description = 模型的能力自我認知
 
 模型從 tool description 判斷自己會什麼。實際案例：座位查詢程式碼已上線，

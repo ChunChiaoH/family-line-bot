@@ -16,9 +16,10 @@ _SKIP_INSTRUCTION = (
     "說給你聽的（正常回覆）：延續或追問你剛才說的內容；對你提出新的問題或請求；"
     "語氣明顯是在對你說話（即使沒有稱呼你）；"
     "你上次發言以問題結尾且還沒有人回答過，而這則訊息的內容回應了那個問題——"
-    "即使中間隔了別人的訊息、或訊息裡提到或 @ 了其他家人，回答你的部分優先"
-    "（例：你問「你在台灣嗎？」，家人回「我在雪梨 但 @小華 應該在台北」，"
-    "這是在回答你，要回覆）；"
+    "這是在回答你，一定要回覆，即使中間隔了別人的訊息。"
+    "注意：訊息裡 @ 某個家人不一定是在跟那個人說話，更常只是「提到」他——"
+    "「我在雪梨 但 @小華 應該在台北」是在回答你的問題順便向你補充小華的狀況"
+    "（跟小華說她自己在哪是說不通的），這種要回覆；"
     "評論或吐槽「你」這個助理（輕鬆接一兩句就好）。\n"
     "說給家人聽的（只回覆「SKIP」）：家人彼此之間的交談；"
     "與你先前發言無關的新話題，例如宣告自己的行程、分享生活近況——"
@@ -43,6 +44,8 @@ _MEMORY_INSTRUCTION = (
     "（create / str_replace / insert / delete / rename）。"
     "值得記住的：家人的偏好、過敏、重要日期、約定好的事情；"
     "家人明確說「記住…」時一定要記。不要記臨時或瑣碎的資訊。"
+    "只要你這一輪用了記憶寫入指令，就代表這則訊息是說給你聽的——"
+    "「不要」回覆 SKIP，至少簡短讓對方知道你記下了。"
     "建議的檔案：members.md（成員與稱謂）、preferences.md（偏好與禁忌）、"
     "dates.md（重要日期）、agreements.md（約定事項）。"
     "記憶空間有限，定期把過期的條目刪掉、重複的合併。\n\n"
@@ -132,6 +135,9 @@ class ClaudeService:
             response = self._client.messages.create(
                 model=self._model,
                 max_tokens=1024,
+                # SKIP judgments ride the same call as generation; default
+                # temperature (1.0) makes borderline judgments coin-flips.
+                temperature=0.3,
                 # Breakpoint at the system tail caches the tools+system prefix
                 # across tool-loop iterations (and 5-min-adjacent requests).
                 # Below the model's minimum cacheable length it's silently a no-op.
