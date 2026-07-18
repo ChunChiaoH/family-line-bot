@@ -4,6 +4,13 @@ updated: 2026-07-16
 
 # Operations — 營運與除錯
 
+## 檢視 bot 實戰表現
+
+`python scripts/review_chat.py <chat_id> --hours 24`——統一時間軸（Firestore 訊息 ×
+log 的觸發/工具/token/延遲 × 重投/冷啟動/錯誤）＋統計。完整檢視流程做成
+`/review-bot` 指令（`.claude/commands/review-bot.md`）：取證 → 判斷 → 修正走
+「回歸測試 + wiki ingest + 使用者拍板部署」軌道。2026-07-18 首夜檢討即此流程的原型。
+
 ## 撈 log
 
 ```

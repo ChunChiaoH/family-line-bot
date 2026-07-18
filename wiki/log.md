@@ -1,5 +1,12 @@
 # Log
 
+## [2026-07-18] change | 檢視流程工具化：review_chat.py + /review-bot
+
+把首夜檢討的手工取證（Firestore 撈對話、log 撈觸發、對時間戳手拼）做成
+`scripts/review_chat.py` 統一時間軸；整套 review 流程寫成 `/review-bot` 指令。
+工具首跑即揭露新細節：06:54 的 mention 觸發了 memory 寫入迴圈後回空文字被靜默丟棄
+（昨日「寫記憶必吭聲」修正正好蓋住此路徑）。詳見 [[operations]]。
+
 ## [2026-07-18] change | 第四群首夜實戰檢討 → 四項修正 + 降溫
 
 自主檢視新群對話後的修正批次：(1) persona 補媒體機制自我說明（「我看不到圖片」
