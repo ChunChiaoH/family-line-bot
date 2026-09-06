@@ -1,6 +1,6 @@
 """Regression test for _SKIP_INSTRUCTION — run before deploying any change to it.
 
-Replays a real family-group conversation (2026-07-16). A/B must reply (they were
+Replays a real family-group conversation (anonymised). A/B must reply (they were
 production misses once); C/D must SKIP (guards against the prompt change
 making the bot chatty). Each case runs 3x because judgments are sampled at
 temperature — a case passes only if all runs agree. Live API calls (~$0.05).
@@ -27,7 +27,7 @@ svc = ClaudeService(
 
 BASE = (
     "Recent conversation (last 2 hours):\n"
-    "Joe: @Bot 台灣天氣怎麼樣\n"
+    "小明: @Bot 台灣天氣怎麼樣\n"
     "bot: 最近都很熱啦，夏天嘛 😅 今天有沒有下雨看你在哪？\n\n"
     "台北的話這幾天都高溫悶熱，有時午後雷陣雨，出門記得帶傘。你現在在台灣嗎？\n\n"
 )
@@ -37,10 +37,10 @@ BASE = (
 # present, a write must be accompanied by at least a short acknowledgement.
 CASES = [
     ("A 吐槽bot(要回)", BASE, "阿華: 這個AI講話太台了吧", True, False),
-    ("B 回答bot問題(要回)", BASE + "阿華: 這個AI講話太台了吧\n", "Joe: 我在澳洲雪梨 但是 @阿華 應該是在台北", True, False),
-    ("C 家人互聊(該SKIP)", BASE + "Joe: 我在澳洲雪梨 但是 @阿華 應該是在台北\n", "阿華: 晚餐要吃什麼", False, False),
-    ("D 無關新話題(該SKIP)", BASE, "Joe: 我下週開始要去健身房報到", False, False),
-    ("E 寫記憶要吭聲(要回)", BASE, "Joe: 對了 阿華對花生過敏 大家以後聚餐注意一下", True, True),
+    ("B 回答bot問題(要回)", BASE + "阿華: 這個AI講話太台了吧\n", "小明: 我在澳洲雪梨 但是 @阿華 應該是在台北", True, False),
+    ("C 家人互聊(該SKIP)", BASE + "小明: 我在澳洲雪梨 但是 @阿華 應該是在台北\n", "阿華: 晚餐要吃什麼", False, False),
+    ("D 無關新話題(該SKIP)", BASE, "小明: 我下週開始要去健身房報到", False, False),
+    ("E 寫記憶要吭聲(要回)", BASE, "小明: 對了 阿華對花生過敏 大家以後聚餐注意一下", True, True),
 ]
 
 RUNS = 3

@@ -1,5 +1,5 @@
 ---
-updated: 2026-07-16
+updated: 2026-09-06
 ---
 
 # Operations — 營運與除錯
@@ -15,7 +15,7 @@ log 的觸發/工具/token/延遲 × 重投/冷啟動/錯誤）＋統計。完�
 
 ```
 gcloud logging read 'resource.type=cloud_run_revision AND resource.labels.service_name=family-line-bot' \
-  --project=<your-project-id> --limit=50 --format="value(timestamp,textPayload)" --freshness=1h
+  --project="${PROJECT_ID}" --limit=50 --format="value(timestamp,textPayload)" --freshness=1h
 ```
 
 - Python logging 走 stderr，**severity 過濾常常撈不到**，直接撈全部再文字過濾。

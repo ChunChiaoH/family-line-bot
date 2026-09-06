@@ -21,12 +21,34 @@ Auth: reads an OAuth access token from GCLOUD_TOKEN (no ADC). Run with:
 """
 import json
 import os
+import subprocess
 import sys
 from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 
-PROJECT = "<your-project-id>"
+
+def _resolve_project() -> str:
+    """GCP project id: env ``GCP_PROJECT`` (see .env.example), else the active
+    ``gcloud config get-value project``. Exits with a clear message if neither."""
+    project = os.environ.get("GCP_PROJECT", "").strip()
+    if project:
+        return project
+    try:
+        out = subprocess.run(
+            ["gcloud", "config", "get-value", "project"],
+            capture_output=True, text=True, encoding="utf-8", shell=True,
+        ).stdout.strip()
+    except OSError:
+        out = ""
+    if out and out != "(unset)":
+        return out
+    sys.exit(
+        "No GCP project configured. Set GCP_PROJECT in .env "
+        "or run: gcloud config set project <your-project-id>"
+    )
+
+
 MODEL = "claude-sonnet-4-6"
 
 # Skeleton files: filename -> Chinese heading used in the file body.
@@ -184,10 +206,11 @@ def main() -> int:
     import anthropic
 
     creds = Credentials(token=token)
-    db = firestore.Client(project=PROJECT, credentials=creds)
+    project = _resolve_project()
+    db = firestore.Client(project=project, credentials=creds)
     client = anthropic.Anthropic(api_key=api_key)
 
-    print(f"Scanning chats collection in project {PROJECT} ...")
+    print(f"Scanning chats collection in project {project} ...")
     docs = list(db.collection("chats").stream())
     print(f"Found {len(docs)} chat doc(s).\n")
 

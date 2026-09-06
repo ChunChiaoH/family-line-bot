@@ -1,6 +1,6 @@
 # Wiki Index
 
-家庭 LINE bot（「Bot」）的知識庫。每頁一行摘要；讀完 index 就知道去哪找答案。
+家庭 LINE bot（顯示名稱由各自部署的 LINE channel 決定）的知識庫。每頁一行摘要；讀完 index 就知道去哪找答案。
 維護規則見 CLAUDE.md 的 Wiki Schema 一節。
 
 ## 架構

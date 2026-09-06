@@ -6,4 +6,4 @@ __pycache__/
 .claude/
 scripts/
 .gcloudignore
-Dockerfile.dockerignore
+.dockerignore

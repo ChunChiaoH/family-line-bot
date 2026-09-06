@@ -12,6 +12,7 @@ plus a summary block. Read-only; needs gcloud auth (logs + Firestore REST).
 """
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -19,7 +20,32 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-PROJECT = "<your-project-id>"
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+
+def _resolve_project() -> str:
+    """GCP project id: env ``GCP_PROJECT`` (see .env.example), else the active
+    ``gcloud config get-value project``. Exits with a clear message if neither."""
+    project = os.environ.get("GCP_PROJECT", "").strip()
+    if project:
+        return project
+    try:
+        out = subprocess.run(
+            ["gcloud", "config", "get-value", "project"],
+            capture_output=True, text=True, encoding="utf-8", shell=True,
+        ).stdout.strip()
+    except OSError:
+        out = ""
+    if out and out != "(unset)":
+        return out
+    sys.exit(
+        "No GCP project configured. Set GCP_PROJECT in .env "
+        "or run: gcloud config set project <your-project-id>"
+    )
+
+PROJECT = _resolve_project()
 SERVICE = "family-line-bot"
 TPE = ZoneInfo("Asia/Taipei")
 

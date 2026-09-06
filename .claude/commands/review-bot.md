@@ -9,7 +9,7 @@ Review the bot's recent real-world behavior in a chat and drive improvements.
 python scripts/review_chat.py <chat_id> --hours 24
 ```
 
-chat_id 在 wiki/deployment.md 白名單節。輸出是統一時間軸（訊息 × 觸發判斷 ×
+chat_id 取自 `ALLOWED_CHAT_IDS`（.env / Cloud Run env var），取得方式見 wiki/operations.md。輸出是統一時間軸（訊息 × 觸發判斷 ×
 工具呼叫 × token/延遲 × 重投/冷啟動/錯誤）＋統計摘要。
 
 讀時間軸的已知常態（不是 bug，別誤報）：

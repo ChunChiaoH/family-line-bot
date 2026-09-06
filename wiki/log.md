@@ -1,5 +1,44 @@
 # Log
 
+## [2026-09-06] change | 公開化包裝：/setup onboarding、README、deploy.md 首次部署修正
+
+目標是讓陌生人 clone 後在 Claude Code 跑 `/setup` 就能長出自己的家庭 bot。
+新增 `.claude/commands/setup.md`（訪談式：一次要齊 LINE secret/token、Anthropic key、
+GCP 專案、region、可選 TDX → 本地 /health → 委派 `/deploy` → `set_webhook.py` →
+用 log 撈 chat ID 填白名單 → 端到端驗證），`README.md`（英文；說明中文內容是為台灣
+家人而做的本貌）、`LICENSE`（MIT）、`.env.example`。
+`deploy.md` 修掉三個新手首次部署必踩的坑：(1) 空的 TDX secret 讓 `secrets versions add`
+與 `--set-secrets` 失敗 → secret 迴圈與 `--set-secrets` 改為只處理 .env 非空的 key，
+TDX 端到端可選；(2) 不存在的 `tests/` 讓 pytest 步驟報錯 → 加 `[ -d tests ]` 守衛；
+(3) 全新專案沒開 API、沒建 Firestore → 新增 step 2 `services enable` + `firestore databases
+create`（冪等）。REGION/SERVICE/REPO 改為可用環境變數覆寫。`.gcloudignore` 末行
+`Dockerfile.dockerignore` 是兩行黏在一起的 typo，修正。
+Subagent 檢視時另指出但未處理：[[deployment]] 的 env/secret 表未列 MEDIA_BUCKET /
+TDX_*；[[architecture]] 仍寫 `chats/{chat_id} → memory`（實際已是 `memory_files`
+子集合）。留待下次 lint。
+
+## [2026-09-06] change | 公開化前的隱私清理
+
+Repo 由 private 轉 public 前的一次性清掃：五個群組的 chat ID、真實群組名稱
+（原以 emoji／中文名記在 [[deployment]] 白名單節與本頁多筆舊條目）、回歸測資裡的
+真實家人姓名與 bot 顯示名稱、GCP 專案 ID 與 media bucket 名稱，全數從工作樹移除。
+去處：chat ID 只活在 `ALLOWED_CHAT_IDS`（.env → Cloud Run env var），金鑰仍在
+Secret Manager，專案 ID 改由 `GCP_PROJECT` env 或 `gcloud config` 解析
+（`scripts/review_chat.py` / `scripts/migrate_memory.py` 的 `_resolve_project()`）；
+文件一律用 `${PROJECT_ID}` / `<your-project-id>` 佔位，比照 `.claude/commands/deploy.md`。
+`scripts/skip_regression.py` 測資改為匿名人名（小明／阿華），@ 提及結構與語意不變，
+回歸案例的判準完全一致。新增 `.env.example`（只有鍵名與註解，無值）。
+**今後規約：wiki 不得記錄 chat ID、真實群組名、家人姓名**——舊條目為此破例改寫
+（append-only 的隱私例外），技術內容保留。
+git 歷史仍含這些字串，需另跑 `git filter-repo --replace-text` 重寫後強推（步驟另備）。
+
+## [2026-08-11] change | 白名單加入第五個群組
+
+只改 env var（revision 00017），無程式變更；chat ID 只進 `ALLOWED_CHAT_IDS`，不記在 wiki（[[deployment]]）。
+取 ID 仍走「請人在群裡發一則訊息 → log 撈 `Ignoring message from non-whitelisted chat`」的老路：
+JoinEvent 沒有 handler，group ID 進不了 log（本次 join 還被 LINE 重投兩次，更難分辨是幾個群）。
+待辦：加 JoinEvent handler 把 group ID 記進 log，省掉這步人工。
+
 ## [2026-07-18] change | 檢視流程工具化：review_chat.py + /review-bot
 
 把首夜檢討的手工取證（Firestore 撈對話、log 撈觸發、對時間戳手拼）做成
@@ -28,7 +67,7 @@
 
 ## [2026-07-17] change | 白名單加入第四個群組
 
-`<CHAT_ID_REDACTED>`。只改 env var（revision 00014），無程式變更（[[deployment]]）。
+只改 env var（revision 00014），無程式變更；chat ID 只進 `ALLOWED_CHAT_IDS`（[[deployment]]）。
 
 ## [2026-07-17] change | 資料保護三保險 + 帳單盤點
 
@@ -90,7 +129,7 @@ Append-only。格式：`## [YYYY-MM-DD] <type> | <title>`，type ∈ ingest / ch
 
 Mention-only 觸發改為混合觸發（[[triggering]]）；ChatStore 加 Firestore 後端（[[architecture]]）；
 webhook 隨機路徑、群組白名單、Secret Manager、max-instances=1（[[deployment]]）。
-首次部署到 Cloud Run 專案 <your-project-id>。
+首次部署到 Cloud Run（專案 ID 見本機 gcloud 設定，不記在 repo）。
 
 ## [2026-07-11] change | 連發防護 + 觸發敏感度調整 + 純文字回覆
 
@@ -113,7 +152,7 @@ Video handler 記錄訊息 + 快取縮圖，不主動呼叫 Claude；quote 影�
 
 ## [2026-07-12] change | 白名單鎖定三個群組
 
-ALLOWED_CHAT_IDS 填入第一群 / 第二群 / 第三群，其餘群組訊息直接忽略（[[deployment]]）。
+ALLOWED_CHAT_IDS 填入前三個家庭群組的 chat ID，其餘群組訊息直接忽略（[[deployment]]）。
 
 ## [2026-07-12] ingest | 建立本 wiki
 

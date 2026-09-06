@@ -1,6 +1,6 @@
 ---
-updated: 2026-07-16
-verified-against: revision family-line-bot-00012 / .claude/commands/deploy.md
+updated: 2026-09-06
+verified-against: revision family-line-bot-00017 / .claude/commands/deploy.md
 ---
 
 # Deployment — GCP 設定與部署
@@ -9,7 +9,8 @@ verified-against: revision family-line-bot-00012 / .claude/commands/deploy.md
 
 ## 基本盤
 
-- GCP 專案 `<your-project-id>`，region asia-east1，服務 `family-line-bot`
+- GCP 專案 `<your-project-id>`（deploy.md 以 `${PROJECT_ID}` 代入，取自 `gcloud config`），
+  region asia-east1，服務 `family-line-bot`
 - Runtime SA：`family-line-bot-run@...`（最小權限：`roles/datastore.user` +
   各 secret 的 `secretmanager.secretAccessor` + media bucket 的 `storage.objectAdmin`
   （僅該 bucket，2026-07-16）；不要用預設 compute SA）
@@ -38,11 +39,13 @@ gcloud run services update family-line-bot --region=asia-east1 \
 `^;^` 是 gcloud 的自訂分隔符語法，**值裡有逗號時必須用**（白名單就是）。
 注意 `--set-env-vars` 會整組替換、`--update-env-vars` 只改指定的。
 
-## 白名單現況（2026-07-17）
+## 白名單
 
-四個群組：第一群 `<CHAT_ID_REDACTED>`、第二群 `<CHAT_ID_REDACTED>`、
-第三群 `<CHAT_ID_REDACTED>`、第四群 `<CHAT_ID_REDACTED>`。
-空白名單 = 全放行（開發用）。新群組 ID 的取得方式見 [[operations]]。
+群組 chat ID **只存在於 `ALLOWED_CHAT_IDS`**（本機 `.env` → deploy 時進 Cloud Run env var），
+不寫進本 repo 的任何檔案或 wiki 頁——它們是可識別的個資，公開 repo 一律不留。
+格式是逗號分隔的 `C...` ID；空白名單 = 全放行（開發用）。
+新群組 ID 的取得方式見 [[operations]]（撈 log 那節）。
+目前線上白名單有五個家庭群組（2026-08-11 起，第五個為 env-only 變更 revision 00017）。
 
 ## 部署後自動接 webhook
 
