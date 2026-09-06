@@ -161,7 +161,8 @@ This repo was pair-programmed with Claude Code, and the collaboration is part of
 not just how the code got typed.
 
 - **`.claude/commands/` holds the operational skills.** `/setup` onboards a stranger's own
-  copy, `/deploy` is the idempotent Cloud Run procedure, `/add-tool` scaffolds a new tool
+  copy, `/deploy` is the idempotent Cloud Run procedure, `/add-group` whitelists a new group
+  (find the chat ID in the logs, then an env-only revision), `/add-tool` scaffolds a new tool
   along the existing seams, `/review-bot` runs the improvement loop. They are written for
   Claude to execute, which is why they are terse and command-first.
 - **`wiki/` is an LLM-maintained knowledge base.** Per CLAUDE.md, the agent ingests a page

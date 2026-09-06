@@ -99,15 +99,14 @@ first run it creates the runtime service account (`family-line-bot-run@…`, lea
 bucket only), the media bucket, the Secret Manager secrets, the Artifact Registry repo, and
 the Cloud Run service (`--max-instances=1`, `--allow-unauthenticated`).
 
-Two first-run gotchas to handle before you run it:
+Notes for a first run:
 
-- Step 1 runs `python -m pytest -q`; there is no `tests/` directory in this repo — skip it.
-- Step 3 loops over `TDX_CLIENT_SECRET` as well. `gcloud secrets versions add` rejects an
-  **empty** payload, and step 5's `--set-secrets` requires every listed secret to have a
-  version. If the user skipped TDX, either drop `TDX_CLIENT_SECRET` from both the loop and
-  the `--set-secrets` list, or store a placeholder value (`unused`) — the bot only registers
-  the THSR tool when both `TDX_CLIENT_ID` and `TDX_CLIENT_SECRET` are non-empty
-  (`family_line_bot/app.py`), so a placeholder is harmless but the ID must stay empty.
+- Step 1's tests are offline (`python -m pytest -q`); run them. `scripts/skip_regression.py`
+  costs API calls and is only needed when `_SKIP_INSTRUCTION` changes — skip it here.
+- If the user skipped TDX, leave `TDX_CLIENT_ID` / `TDX_CLIENT_SECRET` empty in `.env`.
+  deploy.md skips empty keys when creating secrets and builds `--set-secrets` /
+  `--set-env-vars` only from what exists, so no placeholder is needed; the THSR tool is
+  simply not registered (`family_line_bot/app.py`).
 
 Also note `USE_FIRESTORE=true` and `MEDIA_BUCKET=${PROJECT_ID}-media` are set inside the
 deploy command's `--set-env-vars`, so the deployed service uses Firestore + GCS even though
@@ -138,35 +137,17 @@ Re-run `scripts/set_webhook.py` any time the service URL or `WEBHOOK_PATH_TOKEN`
 
 ## 7. Whitelist the group (loop, once per group)
 
-Chat IDs are **never** written into the repo or `wiki/` — env var only.
+Run `/add-group` (`.claude/commands/add-group.md`) once per group — it is the same flow the
+owner uses in production, so do not re-derive it here. In one line: ask the user to add the
+bot to the group **and send a message there** (a join alone leaves no chat ID in the logs),
+find `Trigger: none (chat=Cxxxx)` (whitelist still open) or `Ignoring message from
+non-whitelisted chat Cxxxx` (whitelist already set) in the Cloud Run logs, confirm the group
+with `get_group_summary`, append the ID to `ALLOWED_CHAT_IDS` with
+`gcloud run services update ... --update-env-vars='^;^ALLOWED_CHAT_IDS=...'` (env-only
+revision, no rebuild), and mirror the same value into `.env` so the next `/deploy` — which
+reads it from `.env` and uses `--set-env-vars` — does not wipe it.
 
-1. Ask the user to add the bot to the family group (invite it as a friend first, then add it
-   to the group) and to send any message there.
-2. Read the logs and find the chat ID:
-
-```bash
-gcloud logging read 'resource.type=cloud_run_revision AND resource.labels.service_name=family-line-bot' \
-  --limit=50 --format="value(timestamp,textPayload)" --freshness=10m
-```
-
-   Look for `Trigger: none (chat=Cxxxxxxxx, msg=...)` (whitelist still open) or
-   `Ignoring message from non-whitelisted chat Cxxxxxxxx` (whitelist already set). Python
-   logging goes to stderr and severity filters often miss it — pull everything and grep the
-   text, as `wiki/operations.md` says.
-
-3. Set the whitelist without a rebuild:
-
-```bash
-gcloud run services update family-line-bot --region=asia-east1 \
-  --update-env-vars='^;^ALLOWED_CHAT_IDS=Cxxxx,Cyyyy'
-```
-
-   The `^;^` custom-delimiter prefix is **required** because the value contains commas.
-   `--update-env-vars` changes only that key; `--set-env-vars` would replace the whole set.
-
-4. Repeat from 1 for each extra group, always passing the full comma-separated list.
-5. Mirror the same value into `.env` so the next `/deploy` (which reads `ALLOWED_CHAT_IDS`
-   from `.env` and uses `--set-env-vars`) does not wipe it. Do not commit `.env`.
+Chat IDs and real group names are **never** written into the repo or `wiki/`.
 
 ## 8. End-to-end verification
 

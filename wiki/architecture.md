@@ -1,6 +1,6 @@
 ---
-updated: 2026-07-12
-verified-against: revision family-line-bot-00006
+updated: 2026-09-06
+verified-against: 304060d
 ---
 
 # Architecture
@@ -18,8 +18,10 @@ Cloud Run: family-line-bot（asia-east1, max-instances=1）
      ├─ handlers/image.py  抓圖快取 + 記錄（1:1 可選 auto-describe）
      ├─ handlers/video.py  抓縮圖快取 + 記錄（不呼叫 Claude）
      │
-     ├─ store.py / firestore_store.py   對話紀錄 + session 狀態 + 記憶
+     ├─ store.py / firestore_store.py   對話紀錄 + session 狀態 + 記憶檔
      ├─ services/claude.py              tool-use 迴圈 → Anthropic API
+     ├─ services/memory.py              memory tool 後端（每群 markdown 檔，見 [[memory-design]]）
+     ├─ services/media.py               媒體 bytes → GCS bucket
      └─ services/line_client.py         回覆 / 抓內容 / 查顯示名稱 → LINE API
 ```
 
@@ -35,17 +37,27 @@ Cloud Run: family-line-bot（asia-east1, max-instances=1）
 
 `ChatStore`（in-memory，本機開發）和 `FirestoreChatStore`（正式環境，`USE_FIRESTORE=true`）
 暴露相同介面：`log_message / log_bot_reply / in_session / get_context / get_message /
-get_memory / append_memory`。換儲存後端只要實作這組介面。
+list_memory_files / write_memory_file / delete_memory_file`。換儲存後端只要實作這組介面。
+（`get_memory` / `append_memory` 是 2026-07-13 前扁平記憶的遺跡，兩邊都還留著但**程式已無呼叫端**，
+只有 `scripts/migrate_memory.py` 的歷史脈絡用得到——見 [[memory-design]]。）
 
 Firestore 佈局：
 
 ```
-chats/{chat_id}                 → last_bot_ts, memory（記憶文字）
-chats/{chat_id}/messages/{msg_id} → ts, user, text, type
+chats/{chat_id}                        → last_bot_ts
+                                         （memory_legacy：遷移前的舊記憶原文備份，只在遷移過的群有）
+chats/{chat_id}/messages/{msg_id}      → ts, user, text, type, media_path?
+chats/{chat_id}/memory_files/{filename} → content, updated
 ```
 
-**圖片/影片縮圖 bytes 永遠不進 Firestore**（1MB 文件上限），放 process-local dict，
-重啟即失。這是刻意取捨：引用圖片提問通常發生在傳圖後幾分鐘內。
+`media_path` 只在有媒體且 `MEDIA_BUCKET` 有設時才寫，值是 GCS 相對路徑
+`chats/{chat_id}/{message_id}.jpg`。
+
+**媒體 bytes 永遠不進 Firestore**（1MB 文件上限）：process-local dict 當熱路徑快取，
+真正的持久化在 GCS（`services/media.py`）。沒設 `MEDIA_BUCKET`（本機開發）時退回純快取，
+重啟即失。GCS 是 2026-07-16 D10「先攢後用」後才補的——原本刻意接受「重啟即失」，
+理由是引用圖片提問通常發生在傳圖後幾分鐘內；那個理由對**體驗**仍成立，
+對**存檔價值**不成立，所以改了。上傳失敗只記 log 不擋訊息處理。
 
 ## 單一 instance 假設
 

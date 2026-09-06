@@ -1,5 +1,49 @@
 # Log
 
+## [2026-09-06] change | 離線單元測試 167 個（tests/）
+
+原本 repo 只有要花 API 的 `scripts/skip_regression.py`。新增 pytest 套件，全部離線，約 9 秒：
+觸發三層規則與 supersede／redelivery guard（test_triggering）、tool loop 在 client 邊界 mock
+（test_claude_service：SKIP 哨兵、pause_turn、iteration 上限、cache_control）、memory 工具
+指令與 4000 字預算（test_memory_backend）、THSR 站名解析與排版（test_thsr）、store 視窗修剪、
+webhook HMAC／白名單／path token 走真 TestClient（test_webhook）、媒體 handler、config。
+分工：離線測試管「水管」，SKIP 判斷品質仍歸 skip_regression。生產碼零改動；只加
+pyproject `dev` extras 與 pytest 設定。`/deploy` step 1 現在有東西可跑。
+寫測試時發現、尚未處理的四點：(1) hard trigger 下 tool loop 耗盡 iteration 或停在 pause_turn
+時 `ask_text` 回 None，text.py 把 None 當 SKIP 而沉默——正是 [[triggering]] 記的「在嗎／壞掉了」
+症狀，應改為 may_skip=False 時退回道歉文；(2) `ChatStore._messages` 索引（含 image_bytes）
+從不修剪；(3) LINE 沒回 sent message id 時 bot 回覆無 id，之後引用它不會成為 hard trigger；
+(4) Firestore messages 集合只限讀不刪，無限成長（成本）。
+
+## [2026-09-06] lint | env/secret 表與 Firestore 佈局校正 + 新增 /add-group
+
+對照程式碼修掉三處過期宣稱：
+- [[deployment]] 的 env/secret 表只列五個 key，漏掉 `MEDIA_BUCKET` / `USE_FIRESTORE` /
+  `TDX_CLIENT_ID` / `TDX_CLIENT_SECRET`。改成逐 key 的表，標明「Secret Manager vs 純 env」
+  「必要 / 可空 / 可選」，並補上「deploy 不設、吃 config.py 預設」那一組
+  （`BOT_PERSONA` / `CONTEXT_WINDOW_HOURS=12` / `MAX_HISTORY=50` / `AUTO_DESCRIBE_IMAGES` /
+  `GCP_PROJECT`）——這組要改就得重 build，不能只發 env-only revision，是實務上最常搞錯的一刀。
+  另記 deploy.md 的兩個防呆（空 key 跳過、`--set-secrets` 動態組），與 step 2 的
+  fresh-project bootstrap（API enable + Firestore create）。
+- [[architecture]] 還寫著 `chats/{chat_id} → last_bot_ts, memory`（2026-07-13 記憶重構後就過期了）。
+  改為實況：`memory_files` 子集合、messages 的 `media_path`、媒體 bytes 在 GCS、
+  `memory_legacy` 只在遷移過的群留著。store 介面清單同步換成 `list/write/delete_memory_file`，
+  並註明 `get_memory` / `append_memory` 已無呼叫端（只剩 `scripts/migrate_memory.py` 的脈絡）。
+  frontmatter 的 verified-against 從 `revision 00006` 改為 commit sha（revision 號跟程式無關，
+  env-only revision 會讓它虛長）。
+- [[operations]] 的 `Trigger:` 行格式寫得像統一格式，實際上 `Trigger: none (chat=...)` **沒有** `msg=`
+  （`handlers/text.py:94`）——撈 log 時照舊格式 grep 會漏。順手修「記憶內容在 `chats/{id}.memory`」。
+
+新增 `/add-group`（`.claude/commands/add-group.md`）：把一直以來人機互動做的「新群上白名單」
+固化成指令——撈 log 取 ID → `get_group_summary` 認群名 → `--update-env-vars` 發 env-only
+revision → **鏡射回 `.env`**（deploy.md 用 `--set-env-vars` 整組替換，`.env` 沒同步下次部署會
+把群悄悄踢掉，這是最容易中的坑）。移除群組走同一條路。取 ID 的兩個地雷（JoinEvent 沒 handler、
+LINE 重投 join）從 2026-08-11 條目搬進 [[operations]] 專節。[[deployment]] 白名單節、
+`setup.md` step 7（原本重抄一遍迴圈）、README 的指令清單都改為指向它。
+
+未動、待確認：`setup.md` step 5 的「Two first-run gotchas」（pytest 無 tests/、空 TDX secret）
+在 deploy.md 重寫後已由 deploy.md 自己處理，該段可刪，但 step 5 不在本次授權範圍。
+
 ## [2026-09-06] change | 公開化包裝：/setup onboarding、README、deploy.md 首次部署修正
 
 目標是讓陌生人 clone 後在 Claude Code 跑 `/setup` 就能長出自己的家庭 bot。

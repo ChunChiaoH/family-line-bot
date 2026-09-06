@@ -19,10 +19,23 @@ gcloud logging read 'resource.type=cloud_run_revision AND resource.labels.servic
 ```
 
 - Python logging 走 stderr，**severity 過濾常常撈不到**，直接撈全部再文字過濾。
-- 觸發診斷靠 `Trigger: mention|reply_to_bot|session|none|superseded (chat=..., msg=...)`，
-  可分辨「規則層沒觸發」vs「Claude 判斷 SKIP」。
-- 新群組 chat ID 的取得：讓人在該群發任意訊息，log 會留 `Trigger: none (chat=Cxxx)`。
-  群組 ID → 名稱用 `MessagingApi.get_group_summary(gid)`。
+- 觸發診斷靠 `Trigger: ...` 行，可分辨「規則層沒觸發」vs「Claude 判斷 SKIP」。
+  格式**不一致**，撈的時候別假設有 `msg=`：`Trigger: none (chat=...)` 只有 chat，
+  `Trigger: mention|reply_to_bot|session (chat=..., msg=...)` 兩者都有
+  （`handlers/text.py`）。白名單擋掉的訊息連 Trigger 行都不會有，只有 app.py 的
+  `Ignoring message from non-whitelisted chat <id>`。
+
+## 新群組上白名單
+
+完整流程做成 `/add-group` 指令（`.claude/commands/add-group.md`）：撈 log 取 ID →
+`get_group_summary` 認群名 → `--update-env-vars` 發 env-only revision → 鏡射回 `.env`。
+這裡只記程式碼讀不出來的三件事：
+
+- **一定要請人在群裡發一則訊息**。JoinEvent 沒有 handler，「被加入群組」不會讓 group ID
+  進 log；只有 MessageEvent 才會（2026-08-11 加第五群時踩到）。
+- **LINE 會重投 join 事件**，同一次加入看起來像好幾個群，光看 join 分不出是幾個群、哪個是哪個
+  ——這也是為什麼要靠人發的訊息定位。
+- **wiki 不記 chat ID、不記真實群名**（公開 repo）。要記就記「有幾個群、哪個 revision」。
 
 ## 已知地雷
 
@@ -69,4 +82,4 @@ Anthropic token，不在 GCP 帳單上）。
 
 - Console 用量 vs 預期（測試日 ≈ $0.5+/天是正常的，日常應遠低於此）
 - log 裡 `Ignoring message from non-whitelisted chat` 出現 = 有人把 bot 拉進陌生群
-- 記憶內容（Firestore `chats/{id}.memory`）有沒有記進垃圾——可直接人工編輯
+- 記憶內容（Firestore `chats/{id}/memory_files/*` 的 content 欄）有沒有記進垃圾——可直接人工編輯
