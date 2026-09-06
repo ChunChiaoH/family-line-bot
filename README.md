@@ -73,6 +73,34 @@ is a few dollars a month of Anthropic tokens (prompt caching on, `web_search` ca
 per turn); the GCP bill rounds to zero inside free tiers. Details:
 [wiki/operations.md](wiki/operations.md).
 
+## Why it exists
+
+I don't think a family bot can win on "useful" — dedicated products (calendars, search,
+timetable apps) already do that better. What it can win on is being the only agent that lives
+inside this family's own context, so its memory compounds the longer it runs. The lightweight
+tools (Taiwan High Speed Rail lookups, web search) stay as in-chat conveniences; they are not
+the direction the project is growing in. See [wiki/decisions.md](wiki/decisions.md), decision
+D10.
+
+The per-group memory described above is shaped like a small wiki that Claude curates for
+itself — pages for people, preferences, dates, agreements — and that shape is what makes
+everything below possible: [wiki/memory-design.md](wiki/memory-design.md).
+
+The guiding principle is "record first, use later." Recording is irreversible — what isn't
+saved today is gone for good — so it gets built out first; applications on top of the record
+are reversible and can be tried slowly. Planned, not yet built:
+
+- A consolidation job that curates both facts and "moments" (events, quotable lines) out of the
+  raw chat history, with a strict keep-few bar.
+- Append-only snapshots of the knowledge base whose diffs, over time, form a kind of family
+  chronicle.
+- Recall surfaced by the current conversation, never by the calendar — I deliberately rejected a
+  Facebook-style "on this day" feature.
+- Long-term per-member portraits, used only in the third person, as a familiar but respectful
+  listener. The bot will never role-play a family member in the first person; that line is
+  intentional, to stay well clear of the identity questions that come with any kind of digital
+  legacy.
+
 ## Architecture
 
 ```
